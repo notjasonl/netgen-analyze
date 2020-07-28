@@ -109,7 +109,6 @@ def getScores(l, r, mg, nm):
 					scoreList[right] = score
 				scores[left] = scoreList
 		matches.append(match)
-	print(scores)
 	return scores
 
 def processScores(scores):
@@ -123,28 +122,39 @@ def processScores(scores):
 		match.append(left)
 		match.append(max)
 		matches.append(match)
-	print(matches)
+	return matches
 
-def findSimilarity(src, group, l, r):
-	scores = {}
-	srcElements = l[src]
-	# print(srcElements)
-	# print(src)
-	# print(group)
-	for i in group:
-		simScore = 0
-		testElements = r[i]
-		# commonElements = list(set(srcElements).intersection(testElements))
-		# print(srcElements)
-		# print(testElements)
-		# simScore = 
-		# print(testElements)
-
-
-
+def prettyPrint(plausible, scores):
+	# print(plausible)
+	headers = ["Left Side Circuit", "Right Side Circuit", "Match Probability"]
+	for group in matchGroups:
+		print("\nGroup Seperator --------------\n")
+		left = group[0]
+		right = group[1]
+		data = []
+		for element in left:
+			for guess in plausible:
+				if (guess[0] == element):
+					score = scores[element][guess[1]]
+					collected = [element, guess[1], str(score)]
+					data.append(collected)
+		if (len(data) != 0):	
+			data.insert(0, headers)
+			col_width = max(len(element) for row in data for element in row) + 2
+			for row in data:
+				try:
+					if float(row[2]) < 0.75:
+						row[2] += " >> POSSIBLE MISMATCH"
+				except:
+					print("")
+				print("".join(element.ljust(col_width) for element in row))
+		else:
+			print("Empty group :(")
+# TODO: add a verbose option to show all the elements within each circuit in a case where they don't 100% match
 initialProcessing(badnets)
-#processCommon(netdictleft, netdictright)
+processCommon(netdictleft, netdictright)
 nameMatches = getNameMatches(netdictleft, netdictright, matchGroups)
-similarityScore = getScores(netdictleft, netdictright, matchGroups, nameMatches)
-print(matchGroups)
-processScores(similarityScore)
+similarityScores = getScores(netdictleft, netdictright, matchGroups, nameMatches)
+# print(matchGroups)
+# print(processScores(similarityScore))
+prettyPrint(processScores(similarityScores), similarityScores)

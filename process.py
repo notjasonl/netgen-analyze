@@ -124,6 +124,12 @@ def processScores(scores):
 		matches.append(match)
 	return matches
 
+def getDiffElements(left, right):
+	output = ""
+	leftCir = netdictleft[left]
+	rightCir = netdictright[right]
+	print(leftCir, rightCir)
+
 def prettyPrint(plausible, scores):
 	# print(plausible)
 	headers = ["Left Side Circuit", "Right Side Circuit", "Match Probability"]
@@ -137,13 +143,14 @@ def prettyPrint(plausible, scores):
 				if (guess[0] == element):
 					score = scores[element][guess[1]]
 					collected = [element, guess[1], str(score)]
+					# getDiffElements(element, guess[1])
 					data.append(collected)
 		if (len(data) != 0):	
 			data.insert(0, headers)
 			col_width = max(len(element) for row in data for element in row) + 2
 			for row in data:
 				try:
-					if float(row[2]) < 0.75:
+					if float(row[2]) != 1.00:
 						row[2] += " >> POSSIBLE MISMATCH"
 				except:
 					print("")

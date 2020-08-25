@@ -1,8 +1,13 @@
+#!/usr/bin/env python3
+
 import json
 from operator import itemgetter
+import sys, getopt, argparse
 
-with open("comp.json", "r") as f:
-	data = json.load(f)
+parser = argparse.ArgumentParser(description="Process Netgen output json file and return usable output")
+parser.add_argument('infile', help="Input json file", type=argparse.FileType('r'))
+parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true")
+
 
 useful = []
 
@@ -12,15 +17,20 @@ netdictleft = {}
 netdictright = {}
 
 matchGroups = []
+diffL = {}
+diffR = {}
 
 
 # initial code that should run every time
+def getBadNets():
+	for i in range(len(data)):
+		if "pins" not in data[i]:
+			useful.append(data[i])
+	# pulls the badnets out of badnets within the json
+	badnets = useful[0]["badnets"]
+	return badnets
 
-for i in range(len(data)):
-	if "pins" not in data[i]:
-		useful.append(data[i])
-badnets = useful[0]["badnets"]
-
+# processes data and creates dicts for the left/right sides, as well as groups for matching
 def initialProcessing(badnets):
 	for i in range(len(badnets)):
 		for j in range(len(badnets[i])):
@@ -41,8 +51,7 @@ def initialProcessing(badnets):
 				matchCMB.append(matchSGR)
 				matchGroups.append(matchCMB)
 
-#for i in badnets:
-#	print(i)
+# 
 def processCommon(l, r):
 	keysl = list(l.keys())
 	keysr = list(r.keys())
@@ -102,16 +111,24 @@ def getScores(l, r, mg, nm):
 				scoreList = {}
 				leftElements = l[left]
 				for right in group[1]:
+					# print(right)
 					score = 0
 					rightElements = r[right]
 					common = [x for x in leftElements if x in rightElements]
+					# print(common)
+					# print(leftElements)
+					# print(rightElements)
+					# diffL[left] = [i for i in leftElements + common if i not in leftElements or i not in common]
+					# diffR[right] = [i for i in rightElements + common if i not in rightElements or i not in common]
+					diffL[left] = leftElements
+					diffR[right] = rightElements
 					score = len(common) / len(leftElements)
 					scoreList[right] = score
 				scores[left] = scoreList
 		matches.append(match)
 	return scores
 
-def processScores(scores):
+def processScores(scores, l, r):
 	matches = []
 	for left in scores.keys():
 		match = []
@@ -130,21 +147,38 @@ def getDiffElements(left, right):
 	rightCir = netdictright[right]
 	print(leftCir, rightCir)
 
-def prettyPrint(plausible, scores):
-	# print(plausible)
+def prettyPrint(plausible, scores, verbose=False):
 	headers = ["Left Side Circuit", "Right Side Circuit", "Match Probability"]
 	for group in matchGroups:
 		print("\nGroup Seperator --------------\n")
 		left = group[0]
 		right = group[1]
 		data = []
+		processData = []
 		for element in left:
 			for guess in plausible:
 				if (guess[0] == element):
 					score = scores[element][guess[1]]
 					collected = [element, guess[1], str(score)]
-					# getDiffElements(element, guess[1])
+					# print(collected)
 					data.append(collected)
+					if verbose:
+						data.append([''])
+						data.append([''])
+						# print(element + ":")
+						data.append(["\t" + element + ":"])
+						for l in diffL[element]:
+							temp = ["\t\t" + str(l)]
+							data.append(temp)
+							# print(temp)
+						# print(guess[1] + ":")
+						data.append(["\t" + guess[1] + ":"])
+						for l in diffR[guess[1]]:
+							temp = ["\t\t" + str(l)]
+							data.append(temp)
+							# print(temp)
+						data.append([''])
+						data.append([''])
 		if (len(data) != 0):	
 			data.insert(0, headers)
 			col_width = max(len(element) for row in data for element in row) + 2
@@ -153,15 +187,28 @@ def prettyPrint(plausible, scores):
 					if float(row[2]) != 1.00:
 						row[2] += " >> POSSIBLE MISMATCH"
 				except:
-					print("")
+					pass
 				print("".join(element.ljust(col_width) for element in row))
 		else:
 			print("Empty group :(")
-# TODO: add a verbose option to show all the elements within each circuit in a case where they don't 100% match
+
+# def main(argv):
+	
+# write back into json file in same format
+# write to goodnets if match on both sides, badnets otherwise
+
+args = parser.parse_args()
+with args.infile as f:
+	data = json.load(f)
+
+badnets = getBadNets()
 initialProcessing(badnets)
 processCommon(netdictleft, netdictright)
 nameMatches = getNameMatches(netdictleft, netdictright, matchGroups)
 similarityScores = getScores(netdictleft, netdictright, matchGroups, nameMatches)
 # print(matchGroups)
 # print(processScores(similarityScore))
-prettyPrint(processScores(similarityScores), similarityScores)
+
+prettyPrint(processScores(similarityScores, netdictleft, netdictright), similarityScores, args.verbose)
+# print(netdictleft)
+# print(diffR["_51_"])

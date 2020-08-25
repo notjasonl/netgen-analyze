@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Written by Jason Liu
+
 import json
 from operator import itemgetter
 import sys, getopt, argparse
@@ -167,13 +169,13 @@ def prettyPrint(plausible, scores, verbose=False):
 						data.append([''])
 						# print(element + ":")
 						data.append(["\t" + element + ":"])
-						for l in diffL[element]:
+						for l in diffL[element].sort():
 							temp = ["\t\t" + str(l)]
 							data.append(temp)
 							# print(temp)
 						# print(guess[1] + ":")
 						data.append(["\t" + guess[1] + ":"])
-						for l in diffR[guess[1]]:
+						for l in diffR[guess[1]].sort():
 							temp = ["\t\t" + str(l)]
 							data.append(temp)
 							# print(temp)

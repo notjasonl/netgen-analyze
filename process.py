@@ -169,13 +169,13 @@ def prettyPrint(plausible, scores, verbose=False):
 						data.append([''])
 						# print(element + ":")
 						data.append(["\t" + element + ":"])
-						for l in diffL[element].sort():
+						for l in sorted(diffL[element]):
 							temp = ["\t\t" + str(l)]
 							data.append(temp)
 							# print(temp)
 						# print(guess[1] + ":")
 						data.append(["\t" + guess[1] + ":"])
-						for l in diffR[guess[1]].sort():
+						for l in sorted(diffR[guess[1]]):
 							temp = ["\t\t" + str(l)]
 							data.append(temp)
 							# print(temp)
@@ -198,6 +198,8 @@ def prettyPrint(plausible, scores, verbose=False):
 	
 # write back into json file in same format
 # write to goodnets if match on both sides, badnets otherwise
+# properly format the nets to be outputted into a file
+# use json to parse the new badnets/goodnets back into the input json file
 
 args = parser.parse_args()
 with args.infile as f:
